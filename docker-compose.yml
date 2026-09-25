@@ -78,3 +78,30 @@ services:
       - spark-master
       - spark-worker-1
       - spark-worker-2
+
+  flink-jobmanager:
+    build:
+      context: ./flink
+    container_name: p2-flink-jobmanager
+    hostname: flink-jobmanager
+    ports:
+      - "8082:8081"
+    command: jobmanager
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
+    volumes:
+      - ./flink:/app
+
+  flink-taskmanager:
+    build:
+      context: ./flink
+    container_name: p2-flink-taskmanager
+    hostname: flink-taskmanager
+    command: taskmanager
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
+      - TASK_MANAGER_NUMBER_OF_TASK_SLOTS=4
+    volumes:
+      - ./flink:/app
+    depends_on:
+      - flink-jobmanager
