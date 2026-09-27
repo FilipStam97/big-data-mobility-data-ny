@@ -34,20 +34,28 @@ def generate_map():
 
         popup = f"<h4>{location}</h4>"
 
+        METRIC_LABELS = {
+            "avg_speed": "Avg speed",
+            "avg_co2": "CO2",
+            "avg_co": "CO",
+            "avg_hc": "HC",
+            "avg_nox": "NOx",
+            "avg_pmx": "PMx",
+            "avg_noise": "Noise",
+        }
+
         for result in results:
             popup += f"""
             <b>{result['processor'].upper()}</b><br>
             Window: {result['window_start']} - {result['window_end']}<br>
             Vehicles: {result['vehicle_count']}<br>
-            Avg speed: {result['avg_speed']:.2f} m/s<br>
-            CO2: {result['avg_co2']:.2f}<br>
-            CO: {result['avg_co']:.2f}<br>
-            HC: {result['avg_hc']:.2f}<br>
-            NOx: {result['avg_nox']:.2f}<br>
-            PMx: {result['avg_pmx']:.2f}<br>
-            Noise: {result['avg_noise']:.2f} dB<br>
-            <hr>
             """
+
+            for key, label in METRIC_LABELS.items():
+                if key in result:
+                    popup += f"{label}: {result[key]:.2f}<br>"
+
+            popup += "<hr>"
 
         folium.Marker(
             location=coordinates,

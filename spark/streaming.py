@@ -75,10 +75,33 @@ def parse_args():
         help="Slide interval in simulation seconds",
     )
 
+    parser.add_argument(
+        "--attributes",
+        type=str,
+        default="speed,co2,co,hc,nox,pmx,noise",
+        help="Comma-separated attributes to calculate"
+    )
+
     return parser.parse_args()
 
 
 args = parse_args()
+
+ATTRIBUTES = [
+    attribute.strip().lower()
+    for attribute in args.attributes.split(",")
+]
+
+VALID_ATTRIBUTES = {
+    "speed", "co2", "co", "hc", "nox", "pmx", "noise"
+}
+
+invalid_attributes = set(ATTRIBUTES) - VALID_ATTRIBUTES
+
+if invalid_attributes:
+    raise ValueError(
+        f"Invalid attributes: {', '.join(invalid_attributes)}"
+    )
 
 spark = (
     SparkSession.builder
@@ -201,29 +224,22 @@ analytics = (
 )
 
 
+output_fields = [
+    lit("spark").alias("processor"),
+    col("window.start").cast("string").alias("window_start"),
+    col("window.end").cast("string").alias("window_end"),
+    col("location"),
+    col("vehicle_count"),
+]
+
+for attribute in ATTRIBUTES:
+    output_fields.append(
+        col(f"avg_{attribute}")
+    )
+
 kafka_output = analytics.select(
     to_json(
-        struct(
-            lit("spark").alias("processor"),
-
-            col("window.start")
-                .cast("string")
-                .alias("window_start"),
-
-            col("window.end")
-                .cast("string")
-                .alias("window_end"),
-
-            col("location"),
-            col("vehicle_count"),
-            col("avg_speed"),
-            col("avg_co2"),
-            col("avg_co"),
-            col("avg_hc"),
-            col("avg_nox"),
-            col("avg_pmx"),
-            col("avg_noise"),
-        )
+        struct(*output_fields)
     ).alias("value")
 )
 

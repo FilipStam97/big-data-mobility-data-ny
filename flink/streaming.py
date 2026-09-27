@@ -167,20 +167,28 @@ def parse_vehicle(value):
     )
 
 def analytics_to_json(value):
-    return json.dumps({
+    result = {
         "processor": "flink",
         "window_start": value[1],
         "window_end": value[2],
         "location": value[0],
         "vehicle_count": value[3],
-        "avg_speed": value[4],
-        "avg_co2": value[5],
-        "avg_co": value[6],
-        "avg_hc": value[7],
-        "avg_nox": value[8],
-        "avg_pmx": value[9],
-        "avg_noise": value[10],
-    })
+    }
+
+    values = {
+        "speed": value[4],
+        "co2": value[5],
+        "co": value[6],
+        "hc": value[7],
+        "nox": value[8],
+        "pmx": value[9],
+        "noise": value[10],
+    }
+
+    for attribute in ATTRIBUTES:
+        result[f"avg_{attribute}"] = values[attribute]
+
+    return json.dumps(result)
 
 ###-----------------------------------------------------------------
 
@@ -200,15 +208,46 @@ parser.add_argument(
     help="Slide interval in seconds"
 )
 
+parser.add_argument(
+    "--attributes",
+    type=str,
+    default="speed,co2,co,hc,nox,pmx,noise",
+    help="Comma-separated attributes to calculate"
+)
+
 args = parser.parse_args()
 
 WINDOW_SECONDS = args.window
 SLIDE_SECONDS = args.slide
 
+ATTRIBUTES = [
+    attribute.strip().lower()
+    for attribute in args.attributes.split(",")
+]
+
+VALID_ATTRIBUTES = {
+    "speed",
+    "co2",
+    "co",
+    "hc",
+    "nox",
+    "pmx",
+    "noise"
+}
+
+invalid_attributes = set(ATTRIBUTES) - VALID_ATTRIBUTES
+
+if invalid_attributes:
+    raise ValueError(
+        f"Invalid attributes: {', '.join(invalid_attributes)}"
+    )
+
 print(
     f"Window: {WINDOW_SECONDS}s, "
-    f"Slide: {SLIDE_SECONDS}s"
+    f"Slide: {SLIDE_SECONDS}s, "
+    f"Attributes: {', '.join(ATTRIBUTES)}"
 )
+
 
 env = StreamExecutionEnvironment.get_execution_environment()
 source = (
