@@ -40,7 +40,7 @@ def read_timesteps(filename):
             elem.clear()
 
 
-def stream_vehicle_data(delay=0):
+def stream_vehicle_data(delay=0, limit=None):
     fcd_stream = read_timesteps(FCD_FILE)
     emissions_stream = read_timesteps(EMISSIONS_FILE)
 
@@ -91,6 +91,11 @@ def stream_vehicle_data(delay=0):
 
             count += 1
 
+            if limit is not None and count >= limit:
+                producer.flush()
+                print(f"Finished. Sent {count:,} records.")
+                return
+
             if count % 10000 == 0:
                 print(f"Sent {count:,} records")
 
@@ -114,6 +119,13 @@ if __name__ == "__main__":
         help="Delay in seconds between simulation timesteps"
     )
 
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="Maximum number of records to send"
+    )
+
     args = parser.parse_args()
 
-    stream_vehicle_data(args.delay)
+    stream_vehicle_data(args.delay, args.limit)

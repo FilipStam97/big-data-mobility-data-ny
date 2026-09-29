@@ -1,5 +1,5 @@
 import argparse
-
+import time
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
     avg,
@@ -267,4 +267,17 @@ query = (
     .start()
 )
 
-query.awaitTermination()
+while query.isActive:
+    progress = query.lastProgress
+
+    if progress:
+        print(
+            f"Batch: {progress['batchId']} | "
+            f"Rows: {progress['numInputRows']} | "
+            f"Input rate: {progress['inputRowsPerSecond']:.2f} | "
+            f"Processing rate: {progress['processedRowsPerSecond']:.2f}"
+        )
+
+    time.sleep(2)
+
+#query.awaitTermination()

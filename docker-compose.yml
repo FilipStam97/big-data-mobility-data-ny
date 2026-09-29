@@ -92,16 +92,32 @@ services:
     volumes:
       - ./flink:/app
 
-  flink-taskmanager:
+  flink-taskmanager-1:
     build:
       context: ./flink
-    container_name: p2-flink-taskmanager
-    hostname: flink-taskmanager
+    container_name: p2-flink-taskmanager-1
+    hostname: flink-taskmanager-1
     command: taskmanager
     environment:
       - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
-      - TASK_MANAGER_NUMBER_OF_TASK_SLOTS=4
-    volumes:
-      - ./flink:/app
+      - TASK_MANAGER_NUMBER_OF_TASK_SLOTS=2
+      - FLINK_PROPERTIES=taskmanager.memory.process.size:2048m
     depends_on:
       - flink-jobmanager
+    volumes:
+      - ./flink:/app
+
+  flink-taskmanager-2:
+    build:
+      context: ./flink
+    container_name: p2-flink-taskmanager-2
+    hostname: flink-taskmanager-2
+    command: taskmanager
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
+      - TASK_MANAGER_NUMBER_OF_TASK_SLOTS=2
+      - FLINK_PROPERTIES=taskmanager.memory.process.size:2048m
+    depends_on:
+      - flink-jobmanager
+    volumes:
+      - ./flink:/app
